@@ -2,6 +2,11 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+// import SettingsComponent from './components/Settings'
+import EnhancedAnalytics from '../components/EnhancedAnalytics'
+import CategoryManager from '../components/CategoryManager'
+import SettingsPage from '../components/SettingsPage'
+import CalendarView from '../components/CalendarView'
 import { 
   Mail, 
   Search, 
@@ -26,7 +31,8 @@ import {
   Settings,
   Bell,
   Zap,
-  Inbox
+  Inbox,
+  Calendar
 } from 'lucide-react'
 
 interface Email {
@@ -39,6 +45,11 @@ interface Email {
   isStarred: boolean
   isImportant: boolean
   hasAttachment: boolean
+  meetingTime?: string
+  meetingType?: string
+  deadline?: string
+  eventType?: string
+  isTimeSensitive?: boolean
 }
 
 const mockEmails: Email[] = [
@@ -52,7 +63,9 @@ const mockEmails: Email[] = [
     isRead: false,
     isStarred: true,
     isImportant: true,
-    hasAttachment: true
+    hasAttachment: true,
+    meetingTime: '2024-01-15T14:00:00Z',
+    meetingType: 'planning'
   },
   {
     id: '2',
@@ -63,7 +76,9 @@ const mockEmails: Email[] = [
     isRead: false,
     isStarred: false,
     isImportant: true,
-    hasAttachment: false
+    hasAttachment: false,
+    deadline: '2024-01-14T17:00:00Z',
+    isTimeSensitive: true
   },
   // IMPORTANT EMAILS (3)
   {
@@ -109,7 +124,9 @@ const mockEmails: Email[] = [
     isRead: false,
     isStarred: false,
     isImportant: false,
-    hasAttachment: false
+    hasAttachment: false,
+    meetingTime: '2024-01-14T10:30:00Z',
+    meetingType: 'standup'
   },
   {
     id: '7',
@@ -120,7 +137,9 @@ const mockEmails: Email[] = [
     isRead: true,
     isStarred: false,
     isImportant: false,
-    hasAttachment: false
+    hasAttachment: false,
+    meetingTime: '2024-01-16T15:00:00Z',
+    meetingType: 'presentation'
   },
   {
     id: '8',
@@ -177,25 +196,342 @@ const mockEmails: Email[] = [
     isStarred: false,
     isImportant: false,
     hasAttachment: false
+  },
+  // CALENDAR-AWARE EMAILS
+  {
+    id: '13',
+    from: 'Conference Team',
+    subject: 'Tech Conference 2024 - Registration Deadline',
+    preview: 'Registration for Tech Conference 2024 closes tomorrow at 5 PM. Early bird pricing ends today. Don\'t miss out on this networking opportunity!',
+    time: '3 hours ago',
+    isRead: false,
+    isStarred: false,
+    isImportant: false,
+    hasAttachment: false,
+    deadline: '2024-01-14T17:00:00Z',
+    eventType: 'conference',
+    isTimeSensitive: true
+  },
+  {
+    id: '14',
+    from: 'HR Department',
+    subject: 'All-Hands Meeting - Today 3PM',
+    preview: 'Reminder: All-hands meeting today at 3 PM in the main conference room. We\'ll be discussing Q4 results and 2024 strategy. Attendance is mandatory.',
+    time: '45 min ago',
+    isRead: false,
+    isStarred: true,
+    isImportant: true,
+    hasAttachment: false,
+    meetingTime: '2024-01-14T15:00:00Z',
+    meetingType: 'all-hands'
+  },
+  {
+    id: '15',
+    from: 'Project Manager',
+    subject: 'Sprint Planning - Tomorrow 9AM',
+    preview: 'Sprint planning meeting tomorrow at 9 AM. Please review the backlog and come prepared with your capacity estimates for the next sprint.',
+    time: '2 hours ago',
+    isRead: true,
+    isStarred: false,
+    isImportant: false,
+    hasAttachment: true,
+    meetingTime: '2024-01-15T09:00:00Z',
+    meetingType: 'sprint-planning'
+  },
+  {
+    id: '16',
+    from: 'Training Coordinator',
+    subject: 'Webinar: AI in Business - This Friday',
+    preview: 'Join us for an exclusive webinar on AI in Business this Friday at 2 PM. Learn about the latest trends and how to implement AI solutions in your workflow.',
+    time: '4 hours ago',
+    isRead: false,
+    isStarred: false,
+    isImportant: false,
+    hasAttachment: false,
+    meetingTime: '2024-01-19T14:00:00Z',
+    eventType: 'webinar'
+  },
+  
+  // ADDITIONAL CALENDAR DUMMY DATA
+  // Today's Meetings
+  {
+    id: '17',
+    from: 'CEO Office',
+    subject: 'Board Meeting - 9:00 AM',
+    preview: 'Quarterly board meeting to discuss company performance and strategic initiatives. Please review the attached financial reports.',
+    time: '30 min ago',
+    isRead: false,
+    isStarred: true,
+    isImportant: true,
+    hasAttachment: true,
+    meetingTime: new Date().toISOString().split('T')[0] + 'T09:00:00Z',
+    meetingType: 'board-meeting'
+  },
+  {
+    id: '18',
+    from: 'Product Team',
+    subject: 'Sprint Retrospective - 11:00 AM',
+    preview: 'Weekly sprint retrospective to review completed work and plan improvements for next sprint.',
+    time: '1 hour ago',
+    isRead: false,
+    isStarred: false,
+    isImportant: false,
+    hasAttachment: false,
+    meetingTime: new Date().toISOString().split('T')[0] + 'T11:00:00Z',
+    meetingType: 'retrospective'
+  },
+  {
+    id: '19',
+    from: 'Client Success',
+    subject: 'Client Check-in - 2:00 PM',
+    preview: 'Monthly check-in with our key client to review project progress and address any concerns.',
+    time: '2 hours ago',
+    isRead: false,
+    isStarred: false,
+    isImportant: true,
+    hasAttachment: false,
+    meetingTime: new Date().toISOString().split('T')[0] + 'T14:00:00Z',
+    meetingType: 'client-meeting'
+  },
+  
+  // Tomorrow's Meetings
+  {
+    id: '20',
+    from: 'HR Department',
+    subject: 'Team Building Workshop - 10:00 AM',
+    preview: 'Quarterly team building workshop focused on collaboration and communication skills.',
+    time: '3 hours ago',
+    isRead: false,
+    isStarred: false,
+    isImportant: false,
+    hasAttachment: true,
+    meetingTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] + 'T10:00:00Z',
+    meetingType: 'workshop'
+  },
+  {
+    id: '21',
+    from: 'Engineering Lead',
+    subject: 'Code Review Session - 3:00 PM',
+    preview: 'Weekly code review session to maintain code quality and share best practices.',
+    time: '4 hours ago',
+    isRead: false,
+    isStarred: false,
+    isImportant: false,
+    hasAttachment: false,
+    meetingTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] + 'T15:00:00Z',
+    meetingType: 'code-review'
+  },
+  
+  // This Week's Events
+  {
+    id: '22',
+    from: 'Marketing Team',
+    subject: 'Campaign Launch - Wednesday 1:00 PM',
+    preview: 'Launch meeting for our new product campaign. All stakeholders need to be present.',
+    time: '5 hours ago',
+    isRead: false,
+    isStarred: true,
+    isImportant: true,
+    hasAttachment: true,
+    meetingTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] + 'T13:00:00Z',
+    meetingType: 'launch-meeting'
+  },
+  {
+    id: '23',
+    from: 'Sales Team',
+    subject: 'Quarterly Sales Review - Thursday 10:00 AM',
+    preview: 'Review Q4 sales performance and plan for Q1 targets. Please prepare your sales reports.',
+    time: '6 hours ago',
+    isRead: false,
+    isStarred: false,
+    isImportant: true,
+    hasAttachment: false,
+    meetingTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] + 'T10:00:00Z',
+    meetingType: 'sales-review'
+  },
+  
+  // Upcoming Deadlines
+  {
+    id: '24',
+    from: 'Legal Team',
+    subject: 'Contract Renewal Deadline - Friday',
+    preview: 'Important: Our main vendor contract expires this Friday. We need to finalize the renewal terms.',
+    time: '7 hours ago',
+    isRead: false,
+    isStarred: true,
+    isImportant: true,
+    hasAttachment: true,
+    deadline: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] + 'T17:00:00Z',
+    isTimeSensitive: true
+  },
+  {
+    id: '25',
+    from: 'Finance Department',
+    subject: 'Budget Submission - Next Monday',
+    preview: 'Department budgets for Q1 need to be submitted by Monday. Please review the guidelines.',
+    time: '8 hours ago',
+    isRead: false,
+    isStarred: false,
+    isImportant: true,
+    hasAttachment: true,
+    deadline: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] + 'T17:00:00Z',
+    isTimeSensitive: true
+  },
+  
+  // Events & Webinars
+  {
+    id: '26',
+    from: 'Tech Conference',
+    subject: 'AI Innovation Summit - Next Week',
+    preview: 'Join us for the annual AI Innovation Summit featuring industry leaders and cutting-edge presentations.',
+    time: '1 day ago',
+    isRead: false,
+    isStarred: true,
+    isImportant: false,
+    hasAttachment: false,
+    meetingTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] + 'T09:00:00Z',
+    eventType: 'conference'
+  },
+  {
+    id: '27',
+    from: 'Training Institute',
+    subject: 'Leadership Development Webinar',
+    preview: 'Free webinar on modern leadership practices and team management strategies.',
+    time: '1 day ago',
+    isRead: false,
+    isStarred: false,
+    isImportant: false,
+    hasAttachment: false,
+    meetingTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] + 'T14:00:00Z',
+    eventType: 'webinar'
+  },
+  {
+    id: '28',
+    from: 'Industry Association',
+    subject: 'Networking Event - Next Friday',
+    preview: 'Monthly networking event for industry professionals. Great opportunity to meet potential partners.',
+    time: '2 days ago',
+    isRead: false,
+    isStarred: false,
+    isImportant: false,
+    hasAttachment: false,
+    meetingTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] + 'T18:00:00Z',
+    eventType: 'networking'
+  },
+  
+  // Recurring Events
+  {
+    id: '29',
+    from: 'Team Lead',
+    subject: 'Weekly Team Sync - Every Monday 9:00 AM',
+    preview: 'Regular team synchronization meeting to align on priorities and address blockers.',
+    time: '2 days ago',
+    isRead: false,
+    isStarred: false,
+    isImportant: false,
+    hasAttachment: false,
+    meetingTime: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] + 'T09:00:00Z',
+    meetingType: 'recurring'
+  },
+  {
+    id: '30',
+    from: 'HR Department',
+    subject: 'Monthly All-Hands - First Friday',
+    preview: 'Monthly company-wide meeting to share updates, celebrate achievements, and discuss company direction.',
+    time: '3 days ago',
+    isRead: false,
+    isStarred: false,
+    isImportant: true,
+    hasAttachment: false,
+    meetingTime: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] + 'T15:00:00Z',
+    meetingType: 'all-hands'
   }
 ]
 
 export default function EmailClient() {
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null)
-  const [activeTab, setActiveTab] = useState('inbox')
+  const [activeTab, setActiveTab] = useState('analytics')
   const [searchQuery, setSearchQuery] = useState('')
   const [composeOpen, setComposeOpen] = useState(false)
   const [selectedSmartCategory, setSelectedSmartCategory] = useState<string | null>(null)
   const [smartInboxView, setSmartInboxView] = useState<'categories' | 'summaries' | 'auto-reply'>('categories')
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [autoReplyOpen, setAutoReplyOpen] = useState(false)
   const [summaryOpen, setSummaryOpen] = useState(false)
   const [selectedEmailForAction, setSelectedEmailForAction] = useState<Email | null>(null)
   const [editableReply, setEditableReply] = useState('')
+  const [categoryManagerOpen, setCategoryManagerOpen] = useState(false)
+  const [customCategories, setCustomCategories] = useState([
+    {
+      id: '1',
+      name: 'VIP Clients',
+      color: 'purple',
+      icon: 'Star',
+      description: 'High-priority client communications',
+      rules: [
+        {
+          id: '1',
+          type: 'sender' as const,
+          operator: 'contains' as const,
+          value: 'ceo@company.com',
+          enabled: true
+        }
+      ],
+      isDefault: false,
+      emailCount: 12
+    },
+    {
+      id: '2',
+      name: 'Marketing',
+      color: 'green',
+      icon: 'Target',
+      description: 'Marketing and promotional emails',
+      rules: [
+        {
+          id: '1',
+          type: 'subject' as const,
+          operator: 'contains' as const,
+          value: 'marketing',
+          enabled: true
+        }
+      ],
+      isDefault: false,
+      emailCount: 8
+    }
+  ])
 
   // Filter emails based on selected smart category
   const getFilteredEmails = () => {
     if (!selectedSmartCategory) return mockEmails
     
+    // Check if it's a custom category
+    const customCategory = customCategories.find(cat => cat.id === selectedSmartCategory)
+    if (customCategory) {
+      return mockEmails.filter(email => {
+        return customCategory.rules.some(rule => {
+          if (!rule.enabled) return false
+          
+          switch (rule.type) {
+            case 'sender':
+              return email.from.toLowerCase().includes(rule.value.toLowerCase())
+            case 'subject':
+              return email.subject.toLowerCase().includes(rule.value.toLowerCase())
+            case 'content':
+              return email.preview.toLowerCase().includes(rule.value.toLowerCase())
+            case 'time':
+              return email.time.toLowerCase().includes(rule.value.toLowerCase())
+            case 'priority':
+              return rule.value === 'high' ? email.isImportant : !email.isImportant
+            case 'attachment':
+              return rule.value === 'true' ? email.hasAttachment : !email.hasAttachment
+            default:
+              return false
+          }
+        })
+      })
+    }
+    
+    // Default categories
     switch (selectedSmartCategory) {
       case 'urgent':
         return mockEmails.filter(e => e.isImportant && (e.subject.toLowerCase().includes('urgent') || e.subject.toLowerCase().includes('contract')))
@@ -207,6 +543,13 @@ export default function EmailClient() {
         return mockEmails.filter(e => e.subject.toLowerCase().includes('task') || e.subject.toLowerCase().includes('action') || e.subject.toLowerCase().includes('approval'))
       case 'notifications':
         return mockEmails.filter(e => e.subject.toLowerCase().includes('newsletter') || e.subject.toLowerCase().includes('maintenance') || e.subject.toLowerCase().includes('supplies'))
+      // Calendar-aware categories
+      case 'todays-meetings':
+        return mockEmails.filter(e => e.meetingTime && new Date(e.meetingTime).toDateString() === new Date().toDateString())
+      case 'time-sensitive':
+        return mockEmails.filter(e => e.isTimeSensitive || e.deadline || e.subject.toLowerCase().includes('deadline') || e.subject.toLowerCase().includes('urgent'))
+      case 'events':
+        return mockEmails.filter(e => e.eventType || e.subject.toLowerCase().includes('conference') || e.subject.toLowerCase().includes('webinar') || e.subject.toLowerCase().includes('event'))
       default:
         return mockEmails
     }
@@ -215,13 +558,14 @@ export default function EmailClient() {
   const smartFilteredEmails = getFilteredEmails()
 
   const tabs = [
-    { id: 'inbox', name: 'Inbox', count: mockEmails.length, icon: Inbox },
-    { id: 'smart', name: 'Smart Inbox', count: mockEmails.length, icon: Brain },
     { id: 'analytics', name: 'Analytics', count: mockEmails.length, icon: BarChart3 },
-    { id: 'automation', name: 'Automation', count: 3, icon: Workflow }
+    { id: 'smart', name: 'Smart Inbox', count: mockEmails.length, icon: Brain },
+    { id: 'calendar', name: 'Smart Calendar', count: mockEmails.filter(e => e.meetingTime || e.eventType).length, icon: Calendar },
+    { id: 'automation', name: 'Automation', count: 3, icon: Workflow },
+    { id: 'settings', name: 'Settings', count: 0, icon: Settings }
   ]
 
-  const filteredEmails = mockEmails.filter(email => {
+  const mainFilteredEmails = mockEmails.filter(email => {
     const matchesTab = activeTab === 'inbox' || 
                       (activeTab === 'starred' && email.isStarred) ||
                       (activeTab === 'important' && email.isImportant)
@@ -330,6 +674,7 @@ export default function EmailClient() {
               {activeTab === 'inbox' ? 'Inbox' :
                activeTab === 'smart' ? 'Smart Inbox' :
                activeTab === 'analytics' ? 'Email Analytics' :
+               activeTab === 'calendar' ? 'Smart Calendar' :
                activeTab === 'automation' ? 'Email Automation' :
                'Email'}
             </h2>
@@ -393,10 +738,20 @@ export default function EmailClient() {
                 {smartInboxView === 'categories' && (
                   <div>
                     <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-medium text-gray-900">Smart Categories</h4>
+                      <div className="flex items-center space-x-3">
+                        <h4 className="font-medium text-gray-900">Smart Categories</h4>
+                        {selectedCategory && (
+                          <div className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium">
+                            Filtered by: {selectedCategory}
+                          </div>
+                        )}
+                      </div>
                       {selectedSmartCategory && (
                         <button
-                          onClick={() => setSelectedSmartCategory(null)}
+                          onClick={() => {
+                            setSelectedSmartCategory(null)
+                            setSelectedCategory(null)
+                          }}
                           className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition-colors"
                         >
                           Show All
@@ -447,49 +802,175 @@ export default function EmailClient() {
                     <div className="text-sm text-green-700">4 meeting requests</div>
                   </button>
                   <button 
-                    onClick={() => setSelectedSmartCategory(selectedSmartCategory === 'tasks' ? null : 'tasks')}
+                    onClick={() => setSelectedSmartCategory(selectedSmartCategory === 'notifications' ? null : 'notifications')}
                     className={`p-3 rounded-lg border transition-all hover:shadow-md ${
-                      selectedSmartCategory === 'tasks' 
+                      selectedSmartCategory === 'notifications' 
                         ? 'bg-yellow-100 border-yellow-300 ring-2 ring-yellow-200' 
                         : 'bg-yellow-50 border-yellow-200 hover:bg-yellow-100'
                     }`}
                   >
                     <div className="flex items-center space-x-2 mb-2">
-                      <Target className="w-5 h-5 text-yellow-600" />
-                      <span className="font-medium text-yellow-900">Tasks</span>
+                      <Bell className="w-5 h-5 text-yellow-600" />
+                      <span className="font-medium text-yellow-900">Notifications</span>
                     </div>
-                    <div className="text-sm text-yellow-700">2 actionable emails</div>
-                  </button>
-                  <button 
-                    onClick={() => setSelectedSmartCategory(selectedSmartCategory === 'notifications' ? null : 'notifications')}
-                    className={`p-3 rounded-lg border transition-all hover:shadow-md ${
-                      selectedSmartCategory === 'notifications' 
-                        ? 'bg-purple-100 border-purple-300 ring-2 ring-purple-200' 
-                        : 'bg-purple-50 border-purple-200 hover:bg-purple-100'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Bell className="w-5 h-5 text-purple-600" />
-                      <span className="font-medium text-purple-900">Notifications</span>
-                    </div>
-                    <div className="text-sm text-purple-700">3 system notifications</div>
-                  </button>
-                  <button 
-                    onClick={() => setSelectedSmartCategory(selectedSmartCategory === 'marketing' ? null : 'marketing')}
-                    className={`p-3 rounded-lg border transition-all hover:shadow-md ${
-                      selectedSmartCategory === 'marketing' 
-                        ? 'bg-gray-100 border-gray-300 ring-2 ring-gray-200' 
-                        : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Mail className="w-5 h-5 text-gray-600" />
-                      <span className="font-medium text-gray-900">Marketing</span>
-                    </div>
-                    <div className="text-sm text-gray-700">1 newsletter</div>
+                    <div className="text-sm text-yellow-700">3 system notifications</div>
                   </button>
                 </div>
-                
+
+                {/* Custom Categories */}
+                {customCategories.length > 0 && (
+                  <div className="mt-6">
+                    <h4 className="font-medium text-gray-900 mb-4">Custom Categories</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {customCategories.map((category) => {
+                        const getIconComponent = (iconName: string) => {
+                          const iconMap: { [key: string]: any } = {
+                            'Star': Star,
+                            'Target': Target,
+                            'Mail': Mail,
+                            'Bell': Bell,
+                            'User': User,
+                            'Calendar': Calendar
+                          }
+                          return iconMap[iconName] || Mail
+                        }
+                        
+                        const getColorClasses = (color: string) => {
+                          const colorMap: { [key: string]: any } = {
+                            'purple': {
+                              bg: 'bg-purple-50',
+                              border: 'border-purple-200',
+                              hover: 'hover:bg-purple-100',
+                              selected: 'bg-purple-100 border-purple-300 ring-2 ring-purple-200',
+                              icon: 'text-purple-600',
+                              text: 'text-purple-900',
+                              desc: 'text-purple-700'
+                            },
+                            'green': {
+                              bg: 'bg-green-50',
+                              border: 'border-green-200',
+                              hover: 'hover:bg-green-100',
+                              selected: 'bg-green-100 border-green-300 ring-2 ring-green-200',
+                              icon: 'text-green-600',
+                              text: 'text-green-900',
+                              desc: 'text-green-700'
+                            }
+                          }
+                          return colorMap[color] || colorMap['purple']
+                        }
+                        
+                        const colors = getColorClasses(category.color)
+                        const IconComponent = getIconComponent(category.icon)
+                        const isSelected = selectedSmartCategory === category.id
+                        
+                        return (
+                          <button 
+                            key={category.id}
+                            onClick={() => setSelectedSmartCategory(isSelected ? null : category.id)}
+                            className={`p-3 rounded-lg border transition-all hover:shadow-md ${colors.bg} ${colors.border} ${
+                              isSelected ? colors.selected : colors.hover
+                            }`}
+                          >
+                            <div className="flex items-center space-x-2 mb-2">
+                              <IconComponent className={`w-5 h-5 ${colors.icon}`} />
+                              <span className={`font-medium ${colors.text}`}>{category.name}</span>
+                            </div>
+                            <div className={`text-sm ${colors.desc}`}>
+                              {category.emailCount} emails • {category.rules.length} rules
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Meeting Preparation Tools */}
+                {selectedSmartCategory === 'todays-meetings' && (
+                  <div className="mt-6 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 border border-purple-200">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <Calendar className="w-5 h-5 text-purple-600" />
+                      <h4 className="font-medium text-purple-900">Meeting Preparation</h4>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-white rounded-lg p-3 border border-purple-200">
+                        <h5 className="font-medium text-gray-900 mb-2">📋 Meeting Checklist</h5>
+                        <ul className="text-sm text-gray-600 space-y-1">
+                          <li>• Review agenda and materials</li>
+                          <li>• Prepare talking points</li>
+                          <li>• Check meeting room availability</li>
+                          <li>• Send calendar invites to attendees</li>
+                        </ul>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 border border-purple-200">
+                        <h5 className="font-medium text-gray-900 mb-2">⏰ Time Management</h5>
+                        <ul className="text-sm text-gray-600 space-y-1">
+                          <li>• Set up 15-min prep time</li>
+                          <li>• Block 30-min post-meeting buffer</li>
+                          <li>• Prepare follow-up action items</li>
+                          <li>• Schedule next meeting if needed</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Deadline Tracking */}
+                {selectedSmartCategory === 'time-sensitive' && (
+                  <div className="mt-6 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg p-4 border border-orange-200">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <Clock className="w-5 h-5 text-orange-600" />
+                      <h4 className="font-medium text-orange-900">Deadline Tracking</h4>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="bg-white rounded-lg p-3 border border-orange-200">
+                        <h5 className="font-medium text-gray-900 mb-2">🚨 Urgent (Today)</h5>
+                        <div className="text-sm text-gray-600">
+                          {mockEmails.filter(e => e.deadline && new Date(e.deadline).toDateString() === new Date().toDateString()).length} items due today
+                        </div>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 border border-orange-200">
+                        <h5 className="font-medium text-gray-900 mb-2">⏰ This Week</h5>
+                        <div className="text-sm text-gray-600">
+                          {mockEmails.filter(e => e.deadline && new Date(e.deadline) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)).length} items due this week
+                        </div>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 border border-orange-200">
+                        <h5 className="font-medium text-gray-900 mb-2">📅 Upcoming</h5>
+                        <div className="text-sm text-gray-600">
+                          {mockEmails.filter(e => e.deadline && new Date(e.deadline) > new Date()).length} future deadlines
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Calendar Integration */}
+                {selectedSmartCategory === 'events' && (
+                  <div className="mt-6 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-200">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <Target className="w-5 h-5 text-indigo-600" />
+                      <h4 className="font-medium text-indigo-900">Calendar Integration</h4>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-white rounded-lg p-3 border border-indigo-200">
+                        <h5 className="font-medium text-gray-900 mb-2">📅 Add to Calendar</h5>
+                        <p className="text-sm text-gray-600 mb-3">Convert email events to calendar entries</p>
+                        <button className="w-full bg-indigo-600 text-white py-2 px-3 rounded-lg text-sm hover:bg-indigo-700 transition-colors">
+                          Sync with Google Calendar
+                        </button>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 border border-indigo-200">
+                        <h5 className="font-medium text-gray-900 mb-2">🔗 Meeting Context</h5>
+                        <p className="text-sm text-gray-600 mb-3">View related emails for each meeting</p>
+                        <button className="w-full bg-purple-600 text-white py-2 px-3 rounded-lg text-sm hover:bg-purple-700 transition-colors">
+                          Show Meeting Threads
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Email List for Selected Category */}
                 {selectedSmartCategory && (
                   <div className="mt-6">
@@ -500,6 +981,11 @@ export default function EmailClient() {
                       {selectedSmartCategory === 'tasks' && '📋 Task Emails'}
                       {selectedSmartCategory === 'notifications' && '🔔 Notification Emails'}
                       {selectedSmartCategory === 'marketing' && '📧 Marketing Emails'}
+                      {selectedSmartCategory === 'todays-meetings' && '📅 Today\'s Meetings'}
+                      {selectedSmartCategory === 'time-sensitive' && '⏰ Time-Sensitive Emails'}
+                      {selectedSmartCategory === 'events' && '🎯 Events & Webinars'}
+                      {customCategories.find(cat => cat.id === selectedSmartCategory) && 
+                        `📁 ${customCategories.find(cat => cat.id === selectedSmartCategory)?.name} Emails`}
                     </h4>
                     <div className="space-y-3 max-w-full">
                       {smartFilteredEmails.map((email, index) => (
@@ -528,7 +1014,57 @@ export default function EmailClient() {
                             {email.hasAttachment && (
                               <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">Attachment</span>
                             )}
+                            {email.meetingTime && (
+                              <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs flex items-center space-x-1">
+                                <Calendar className="w-3 h-3" />
+                                <span>{new Date(email.meetingTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                              </span>
+                            )}
+                            {email.deadline && (
+                              <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs flex items-center space-x-1">
+                                <Clock className="w-3 h-3" />
+                                <span>Deadline: {new Date(email.deadline).toLocaleDateString()}</span>
+                              </span>
+                            )}
+                            {email.eventType && (
+                              <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs capitalize">
+                                {email.eventType}
+                              </span>
+                            )}
+                            {email.isTimeSensitive && (
+                              <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs">Time-Sensitive</span>
+                            )}
                           </div>
+                          
+                          {/* Calendar Action Buttons */}
+                          {(email.meetingTime || email.eventType) && (
+                            <div className="flex items-center space-x-2 mt-2">
+                              {email.meetingTime && (
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    console.log('Add to calendar:', email.subject)
+                                  }}
+                                  className="flex items-center space-x-1 px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs hover:bg-purple-200 transition-colors"
+                                >
+                                  <Calendar className="w-3 h-3" />
+                                  <span>Add to Calendar</span>
+                                </button>
+                              )}
+                              {email.eventType && (
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    console.log('View event details:', email.subject)
+                                  }}
+                                  className="flex items-center space-x-1 px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs hover:bg-indigo-200 transition-colors"
+                                >
+                                  <Target className="w-3 h-3" />
+                                  <span>View Details</span>
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -782,19 +1318,39 @@ export default function EmailClient() {
               )}
             </div>
           ) : activeTab === 'analytics' ? (
-            <div className="space-y-6">
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <div className="flex items-center space-x-2 mb-4">
-                  <BarChart3 className="w-6 h-6 text-purple-600" />
-                  <h3 className="text-lg font-semibold text-gray-900">Email Analytics</h3>
-                </div>
-                
-                {/* Key Metrics */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                  <div className="text-center p-4 bg-purple-50 rounded-lg">
-                    <div className="text-2xl font-bold text-purple-600">{mockEmails.length}</div>
-                    <div className="text-sm text-gray-500">Total Emails</div>
-                    <div className="text-xs text-green-600">+12% from last week</div>
+            <EnhancedAnalytics 
+                emails={mockEmails} 
+                selectedCategory={selectedCategory}
+                onCategoryClick={(category) => {
+                  setSelectedCategory(category)
+                  setActiveTab('smart')
+                  // Map Analytics categories to Smart Inbox categories
+                  const categoryMap: { [key: string]: string } = {
+                    'Urgent': 'urgent',
+                    'Important': 'important', 
+                    'Meetings': 'meetings',
+                    'Notifications': 'notifications'
+                  }
+                  setSelectedSmartCategory(categoryMap[category] || category.toLowerCase())
+                }}
+                onExport={(format) => {
+                  console.log(`Exporting analytics as ${format}`)
+                  // Here you would implement actual export functionality
+                }}
+              />
+          ) : activeTab === 'automation' ? (
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="text-center">
+                <Workflow className="w-12 h-12 text-purple-600 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Email Automation</h3>
+                <p className="text-gray-600 mb-4">Automate repetitive email tasks</p>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                      <span className="font-medium">Meeting Request Handler</span>
+                    </div>
+                    <span className="text-sm text-gray-500">15 triggers</span>
                   </div>
                   <div className="text-center p-4 bg-green-50 rounded-lg">
                     <div className="text-2xl font-bold text-green-600">95%</div>
@@ -892,44 +1448,20 @@ export default function EmailClient() {
                 </div>
               </div>
             </div>
-          ) : activeTab === 'automation' ? (
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <div className="text-center">
-                <Workflow className="w-12 h-12 text-purple-600 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Email Automation</h3>
-                <p className="text-gray-600 mb-4">Automate repetitive email tasks</p>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                      <span className="font-medium">Meeting Request Handler</span>
-                    </div>
-                    <span className="text-sm text-gray-500">15 triggers</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                      <span className="font-medium">Urgent Email Escalation</span>
-                    </div>
-                    <span className="text-sm text-gray-500">8 triggers</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
-                      <span className="font-medium">Newsletter Organization</span>
-                    </div>
-                    <span className="text-sm text-gray-500">45 triggers</span>
-                  </div>
-                </div>
-                <button className="mt-4 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
-                  Create New Workflow
-                </button>
-              </div>
-            </div>
+          ) : activeTab === 'calendar' ? (
+            <CalendarView
+              emails={mockEmails}
+              onEmailSelect={setSelectedEmail}
+            />
+          ) : activeTab === 'settings' ? (
+            <SettingsPage
+              customCategories={customCategories}
+              onCategoriesUpdate={setCustomCategories}
+            />
           ) : (
             /* Email List */
             <div className="space-y-2">
-              {filteredEmails.map((email) => (
+                {mainFilteredEmails.map((email) => (
                 <motion.div
                   key={email.id}
                   initial={{ opacity: 0, y: 10 }}
@@ -1395,6 +1927,15 @@ export default function EmailClient() {
             </div>
           </motion.div>
         </div>
+      )}
+
+      {/* Category Manager Modal */}
+      {categoryManagerOpen && (
+        <CategoryManager
+          categories={customCategories}
+          onCategoriesUpdate={setCustomCategories}
+          onClose={() => setCategoryManagerOpen(false)}
+        />
       )}
     </div>
   )
