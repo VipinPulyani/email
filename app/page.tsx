@@ -3,10 +3,11 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 // import SettingsComponent from './components/Settings'
-import EnhancedAnalytics from '../components/EnhancedAnalytics'
+import SimpleAnalytics from '../components/SimpleAnalytics'
 import CategoryManager from '../components/CategoryManager'
 import SettingsPage from '../components/SettingsPage'
 import CalendarView from '../components/CalendarView'
+import EnhancedSmartInbox from '../components/EnhancedSmartInbox'
 import { 
   Mail, 
   Search, 
@@ -453,7 +454,7 @@ export default function EmailClient() {
   const [activeTab, setActiveTab] = useState('analytics')
   const [searchQuery, setSearchQuery] = useState('')
   const [composeOpen, setComposeOpen] = useState(false)
-  const [selectedSmartCategory, setSelectedSmartCategory] = useState<string | null>(null)
+  const [selectedSmartCategory, setSelectedSmartCategory] = useState<string | undefined>(undefined)
   const [smartInboxView, setSmartInboxView] = useState<'categories' | 'summaries' | 'auto-reply'>('categories')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [autoReplyOpen, setAutoReplyOpen] = useState(false)
@@ -516,14 +517,6 @@ export default function EmailClient() {
               return email.from.toLowerCase().includes(rule.value.toLowerCase())
             case 'subject':
               return email.subject.toLowerCase().includes(rule.value.toLowerCase())
-            case 'content':
-              return email.preview.toLowerCase().includes(rule.value.toLowerCase())
-            case 'time':
-              return email.time.toLowerCase().includes(rule.value.toLowerCase())
-            case 'priority':
-              return rule.value === 'high' ? email.isImportant : !email.isImportant
-            case 'attachment':
-              return rule.value === 'true' ? email.hasAttachment : !email.hasAttachment
             default:
               return false
           }
@@ -558,11 +551,11 @@ export default function EmailClient() {
   const smartFilteredEmails = getFilteredEmails()
 
   const tabs = [
-    { id: 'analytics', name: 'Analytics', count: mockEmails.length, icon: BarChart3 },
-    { id: 'smart', name: 'Smart Inbox', count: mockEmails.length, icon: Brain },
-    { id: 'calendar', name: 'Smart Calendar', count: mockEmails.filter(e => e.meetingTime || e.eventType).length, icon: Calendar },
-    { id: 'automation', name: 'Automation', count: 3, icon: Workflow },
-    { id: 'settings', name: 'Settings', count: 0, icon: Settings }
+    { id: 'analytics', name: 'Analytics', icon: BarChart3 },
+    { id: 'smart', name: 'Smart Inbox', icon: Brain },
+    { id: 'calendar', name: 'Smart Calendar', icon: Calendar },
+    { id: 'automation', name: 'Automation', icon: Workflow },
+    { id: 'settings', name: 'Settings', icon: Settings }
   ]
 
   const mainFilteredEmails = mockEmails.filter(email => {
@@ -607,23 +600,23 @@ export default function EmailClient() {
   }
 
   return (
-    <div className="h-screen bg-gray-50 flex overflow-hidden">
+    <div className="h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex overflow-hidden">
       {/* Sidebar */}
-      <div className="w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
-        <div className="p-4 border-b border-gray-200">
+      <div className="w-64 bg-white/80 backdrop-blur-xl border-r border-slate-200/50 flex flex-col flex-shrink-0 shadow-xl">
+        <div className="p-4 border-b border-slate-200/50">
           <div className="flex items-center space-x-2 mb-4">
             <Mail className="w-6 h-6 text-purple-600" />
-            <span className="text-lg font-bold text-gray-900">Email</span>
+            <span className="text-lg font-bold gradient-text">Aiden Email</span>
           </div>
           
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
               placeholder="Search emails..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-slate-300/50 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white/50 backdrop-blur-sm"
             />
           </div>
         </div>
@@ -634,21 +627,16 @@ export default function EmailClient() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition-colors ${
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition-all duration-300 card-hover ${
                   activeTab === tab.id
-                    ? 'bg-purple-100 text-purple-700 font-medium'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white font-medium shadow-lg'
+                    : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700'
                 }`}
               >
                 <div className="flex items-center space-x-3">
                   <tab.icon className="w-5 h-5" />
                   <span>{tab.name}</span>
                 </div>
-                {tab.count > 0 && (
-                  <span className="text-sm bg-gray-200 text-gray-600 px-2 py-1 rounded-full">
-                    {tab.count}
-                  </span>
-                )}
               </button>
             ))}
           </nav>
@@ -668,22 +656,22 @@ export default function EmailClient() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 p-4">
+        <div className="bg-white/80 backdrop-blur-xl border-b border-slate-200/50 p-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-xl font-semibold gradient-text">
               {activeTab === 'inbox' ? 'Inbox' :
                activeTab === 'smart' ? 'Smart Inbox' :
                activeTab === 'analytics' ? 'Email Analytics' :
                activeTab === 'calendar' ? 'Smart Calendar' :
                activeTab === 'automation' ? 'Email Automation' :
-               'Email'}
+               'Aiden Email'}
             </h2>
             <div className="flex items-center space-x-2">
-              <button className="p-2 hover:bg-gray-100 rounded-lg">
-                <Settings className="w-5 h-5 text-gray-600" />
+              <button className="p-2 hover:bg-purple-50 rounded-lg transition-colors">
+                <Settings className="w-5 h-5 text-slate-600" />
               </button>
-              <button className="p-2 hover:bg-gray-100 rounded-lg">
-                <Bell className="w-5 h-5 text-gray-600" />
+              <button className="p-2 hover:bg-purple-50 rounded-lg transition-colors">
+                <Bell className="w-5 h-5 text-slate-600" />
               </button>
             </div>
           </div>
@@ -692,884 +680,157 @@ export default function EmailClient() {
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto p-4 max-w-full">
           {activeTab === 'smart' ? (
-            <div className="space-y-4">
-              {/* Smart Inbox Navigation */}
-              <div className="bg-white rounded-lg border border-gray-200 p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-2">
-                    <Brain className="w-6 h-6 text-purple-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">Smart Inbox</h3>
-                  </div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => setSmartInboxView('categories')}
-                      className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                        smartInboxView === 'categories'
-                          ? 'bg-purple-100 text-purple-700'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                    >
-                      Categories
-                    </button>
-                    <button
-                      onClick={() => setSmartInboxView('summaries')}
-                      className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                        smartInboxView === 'summaries'
-                          ? 'bg-purple-100 text-purple-700'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                    >
-                      Summaries
-                    </button>
-                    <button
-                      onClick={() => setSmartInboxView('auto-reply')}
-                      className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                        smartInboxView === 'auto-reply'
-                          ? 'bg-purple-100 text-purple-700'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                    >
-                      Auto Reply
-                    </button>
-                  </div>
-                </div>
-
-                {/* Categories View */}
-                {smartInboxView === 'categories' && (
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center space-x-3">
-                        <h4 className="font-medium text-gray-900">Smart Categories</h4>
-                        {selectedCategory && (
-                          <div className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium">
-                            Filtered by: {selectedCategory}
-                          </div>
-                        )}
-                      </div>
-                      {selectedSmartCategory && (
-                        <button
-                          onClick={() => {
-                            setSelectedSmartCategory(null)
-                            setSelectedCategory(null)
-                          }}
-                          className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition-colors"
-                        >
-                          Show All
-                        </button>
-                      )}
-                    </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <button 
-                    onClick={() => setSelectedSmartCategory(selectedSmartCategory === 'urgent' ? null : 'urgent')}
-                    className={`p-3 rounded-lg border transition-all hover:shadow-md ${
-                      selectedSmartCategory === 'urgent' 
-                        ? 'bg-red-100 border-red-300 ring-2 ring-red-200' 
-                        : 'bg-red-50 border-red-200 hover:bg-red-100'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-2 mb-2">
-                      <AlertCircle className="w-5 h-5 text-red-600" />
-                      <span className="font-medium text-red-900">Urgent</span>
-                    </div>
-                    <div className="text-sm text-red-700">2 emails requiring immediate attention</div>
-                  </button>
-                  <button 
-                    onClick={() => setSelectedSmartCategory(selectedSmartCategory === 'important' ? null : 'important')}
-                    className={`p-3 rounded-lg border transition-all hover:shadow-md ${
-                      selectedSmartCategory === 'important' 
-                        ? 'bg-blue-100 border-blue-300 ring-2 ring-blue-200' 
-                        : 'bg-blue-50 border-blue-200 hover:bg-blue-100'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-2 mb-2">
-                      <User className="w-5 h-5 text-blue-600" />
-                      <span className="font-medium text-blue-900">Important</span>
-                    </div>
-                    <div className="text-sm text-blue-700">3 emails from key contacts</div>
-                  </button>
-                  <button 
-                    onClick={() => setSelectedSmartCategory(selectedSmartCategory === 'meetings' ? null : 'meetings')}
-                    className={`p-3 rounded-lg border transition-all hover:shadow-md ${
-                      selectedSmartCategory === 'meetings' 
-                        ? 'bg-green-100 border-green-300 ring-2 ring-green-200' 
-                        : 'bg-green-50 border-green-200 hover:bg-green-100'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Clock className="w-5 h-5 text-green-600" />
-                      <span className="font-medium text-green-900">Meetings</span>
-                    </div>
-                    <div className="text-sm text-green-700">4 meeting requests</div>
-                  </button>
-                  <button 
-                    onClick={() => setSelectedSmartCategory(selectedSmartCategory === 'notifications' ? null : 'notifications')}
-                    className={`p-3 rounded-lg border transition-all hover:shadow-md ${
-                      selectedSmartCategory === 'notifications' 
-                        ? 'bg-yellow-100 border-yellow-300 ring-2 ring-yellow-200' 
-                        : 'bg-yellow-50 border-yellow-200 hover:bg-yellow-100'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Bell className="w-5 h-5 text-yellow-600" />
-                      <span className="font-medium text-yellow-900">Notifications</span>
-                    </div>
-                    <div className="text-sm text-yellow-700">3 system notifications</div>
-                  </button>
-                </div>
-
-                {/* Custom Categories */}
-                {customCategories.length > 0 && (
-                  <div className="mt-6">
-                    <h4 className="font-medium text-gray-900 mb-4">Custom Categories</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {customCategories.map((category) => {
-                        const getIconComponent = (iconName: string) => {
-                          const iconMap: { [key: string]: any } = {
-                            'Star': Star,
-                            'Target': Target,
-                            'Mail': Mail,
-                            'Bell': Bell,
-                            'User': User,
-                            'Calendar': Calendar
-                          }
-                          return iconMap[iconName] || Mail
-                        }
-                        
-                        const getColorClasses = (color: string) => {
-                          const colorMap: { [key: string]: any } = {
-                            'purple': {
-                              bg: 'bg-purple-50',
-                              border: 'border-purple-200',
-                              hover: 'hover:bg-purple-100',
-                              selected: 'bg-purple-100 border-purple-300 ring-2 ring-purple-200',
-                              icon: 'text-purple-600',
-                              text: 'text-purple-900',
-                              desc: 'text-purple-700'
-                            },
-                            'green': {
-                              bg: 'bg-green-50',
-                              border: 'border-green-200',
-                              hover: 'hover:bg-green-100',
-                              selected: 'bg-green-100 border-green-300 ring-2 ring-green-200',
-                              icon: 'text-green-600',
-                              text: 'text-green-900',
-                              desc: 'text-green-700'
-                            }
-                          }
-                          return colorMap[color] || colorMap['purple']
-                        }
-                        
-                        const colors = getColorClasses(category.color)
-                        const IconComponent = getIconComponent(category.icon)
-                        const isSelected = selectedSmartCategory === category.id
-                        
-                        return (
-                          <button 
-                            key={category.id}
-                            onClick={() => setSelectedSmartCategory(isSelected ? null : category.id)}
-                            className={`p-3 rounded-lg border transition-all hover:shadow-md ${colors.bg} ${colors.border} ${
-                              isSelected ? colors.selected : colors.hover
-                            }`}
-                          >
-                            <div className="flex items-center space-x-2 mb-2">
-                              <IconComponent className={`w-5 h-5 ${colors.icon}`} />
-                              <span className={`font-medium ${colors.text}`}>{category.name}</span>
-                            </div>
-                            <div className={`text-sm ${colors.desc}`}>
-                              {category.emailCount} emails • {category.rules.length} rules
-                            </div>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Meeting Preparation Tools */}
-                {selectedSmartCategory === 'todays-meetings' && (
-                  <div className="mt-6 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 border border-purple-200">
-                    <div className="flex items-center space-x-2 mb-3">
-                      <Calendar className="w-5 h-5 text-purple-600" />
-                      <h4 className="font-medium text-purple-900">Meeting Preparation</h4>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-white rounded-lg p-3 border border-purple-200">
-                        <h5 className="font-medium text-gray-900 mb-2">📋 Meeting Checklist</h5>
-                        <ul className="text-sm text-gray-600 space-y-1">
-                          <li>• Review agenda and materials</li>
-                          <li>• Prepare talking points</li>
-                          <li>• Check meeting room availability</li>
-                          <li>• Send calendar invites to attendees</li>
-                        </ul>
-                      </div>
-                      <div className="bg-white rounded-lg p-3 border border-purple-200">
-                        <h5 className="font-medium text-gray-900 mb-2">⏰ Time Management</h5>
-                        <ul className="text-sm text-gray-600 space-y-1">
-                          <li>• Set up 15-min prep time</li>
-                          <li>• Block 30-min post-meeting buffer</li>
-                          <li>• Prepare follow-up action items</li>
-                          <li>• Schedule next meeting if needed</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Deadline Tracking */}
-                {selectedSmartCategory === 'time-sensitive' && (
-                  <div className="mt-6 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg p-4 border border-orange-200">
-                    <div className="flex items-center space-x-2 mb-3">
-                      <Clock className="w-5 h-5 text-orange-600" />
-                      <h4 className="font-medium text-orange-900">Deadline Tracking</h4>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="bg-white rounded-lg p-3 border border-orange-200">
-                        <h5 className="font-medium text-gray-900 mb-2">🚨 Urgent (Today)</h5>
-                        <div className="text-sm text-gray-600">
-                          {mockEmails.filter(e => e.deadline && new Date(e.deadline).toDateString() === new Date().toDateString()).length} items due today
-                        </div>
-                      </div>
-                      <div className="bg-white rounded-lg p-3 border border-orange-200">
-                        <h5 className="font-medium text-gray-900 mb-2">⏰ This Week</h5>
-                        <div className="text-sm text-gray-600">
-                          {mockEmails.filter(e => e.deadline && new Date(e.deadline) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)).length} items due this week
-                        </div>
-                      </div>
-                      <div className="bg-white rounded-lg p-3 border border-orange-200">
-                        <h5 className="font-medium text-gray-900 mb-2">📅 Upcoming</h5>
-                        <div className="text-sm text-gray-600">
-                          {mockEmails.filter(e => e.deadline && new Date(e.deadline) > new Date()).length} future deadlines
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Calendar Integration */}
-                {selectedSmartCategory === 'events' && (
-                  <div className="mt-6 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-200">
-                    <div className="flex items-center space-x-2 mb-3">
-                      <Target className="w-5 h-5 text-indigo-600" />
-                      <h4 className="font-medium text-indigo-900">Calendar Integration</h4>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-white rounded-lg p-3 border border-indigo-200">
-                        <h5 className="font-medium text-gray-900 mb-2">📅 Add to Calendar</h5>
-                        <p className="text-sm text-gray-600 mb-3">Convert email events to calendar entries</p>
-                        <button className="w-full bg-indigo-600 text-white py-2 px-3 rounded-lg text-sm hover:bg-indigo-700 transition-colors">
-                          Sync with Google Calendar
-                        </button>
-                      </div>
-                      <div className="bg-white rounded-lg p-3 border border-indigo-200">
-                        <h5 className="font-medium text-gray-900 mb-2">🔗 Meeting Context</h5>
-                        <p className="text-sm text-gray-600 mb-3">View related emails for each meeting</p>
-                        <button className="w-full bg-purple-600 text-white py-2 px-3 rounded-lg text-sm hover:bg-purple-700 transition-colors">
-                          Show Meeting Threads
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Email List for Selected Category */}
-                {selectedSmartCategory && (
-                  <div className="mt-6">
-                    <h4 className="font-medium text-gray-900 mb-4">
-                      {selectedSmartCategory === 'urgent' && '🚨 Urgent Emails'}
-                      {selectedSmartCategory === 'important' && '⭐ Important Emails'}
-                      {selectedSmartCategory === 'meetings' && '📅 Meeting Emails'}
-                      {selectedSmartCategory === 'tasks' && '📋 Task Emails'}
-                      {selectedSmartCategory === 'notifications' && '🔔 Notification Emails'}
-                      {selectedSmartCategory === 'marketing' && '📧 Marketing Emails'}
-                      {selectedSmartCategory === 'todays-meetings' && '📅 Today\'s Meetings'}
-                      {selectedSmartCategory === 'time-sensitive' && '⏰ Time-Sensitive Emails'}
-                      {selectedSmartCategory === 'events' && '🎯 Events & Webinars'}
-                      {customCategories.find(cat => cat.id === selectedSmartCategory) && 
-                        `📁 ${customCategories.find(cat => cat.id === selectedSmartCategory)?.name} Emails`}
-                    </h4>
-                    <div className="space-y-3 max-w-full">
-                      {smartFilteredEmails.map((email, index) => (
-                        <div 
-                          key={email.id} 
-                          className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer max-w-full"
-                          onClick={() => setSelectedEmail(email)}
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center space-x-3">
-                              <div className={`w-3 h-3 rounded-full ${email.isImportant ? 'bg-red-500' : 'bg-gray-300'}`}></div>
-                              <span className="font-medium text-gray-900">{email.from}</span>
-                              {email.isStarred && <Star className="w-4 h-4 text-yellow-500 fill-current" />}
-                            </div>
-                            <span className="text-sm text-gray-500">{email.time}</span>
-                          </div>
-                          <h3 className="font-medium text-gray-900 mb-1 break-words">{email.subject}</h3>
-                          <p className="text-sm text-gray-600 mb-2 break-words">{email.preview}</p>
-                          <div className="flex items-center space-x-2">
-                            {email.isImportant && (
-                              <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs">High Priority</span>
-                            )}
-                            {email.subject.toLowerCase().includes('meeting') && (
-                              <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">Meeting</span>
-                            )}
-                            {email.hasAttachment && (
-                              <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">Attachment</span>
-                            )}
-                            {email.meetingTime && (
-                              <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs flex items-center space-x-1">
-                                <Calendar className="w-3 h-3" />
-                                <span>{new Date(email.meetingTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                              </span>
-                            )}
-                            {email.deadline && (
-                              <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs flex items-center space-x-1">
-                                <Clock className="w-3 h-3" />
-                                <span>Deadline: {new Date(email.deadline).toLocaleDateString()}</span>
-                              </span>
-                            )}
-                            {email.eventType && (
-                              <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs capitalize">
-                                {email.eventType}
-                              </span>
-                            )}
-                            {email.isTimeSensitive && (
-                              <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs">Time-Sensitive</span>
-                            )}
-                          </div>
-                          
-                          {/* Calendar Action Buttons */}
-                          {(email.meetingTime || email.eventType) && (
-                            <div className="flex items-center space-x-2 mt-2">
-                              {email.meetingTime && (
-                                <button 
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    console.log('Add to calendar:', email.subject)
-                                  }}
-                                  className="flex items-center space-x-1 px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs hover:bg-purple-200 transition-colors"
-                                >
-                                  <Calendar className="w-3 h-3" />
-                                  <span>Add to Calendar</span>
-                                </button>
-                              )}
-                              {email.eventType && (
-                                <button 
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    console.log('View event details:', email.subject)
-                                  }}
-                                  className="flex items-center space-x-1 px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs hover:bg-indigo-200 transition-colors"
-                                >
-                                  <Target className="w-3 h-3" />
-                                  <span>View Details</span>
-                                </button>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                  </div>
-                )}
-
-                {/* Summaries View */}
-                {smartInboxView === 'summaries' && (
-                  <div>
-                    <div className="flex items-center space-x-2 mb-4">
-                      <FileText className="w-5 h-5 text-purple-600" />
-                      <h4 className="font-medium text-gray-900">AI Email Summaries</h4>
-                    </div>
-                    <div className="space-y-3">
-                      {smartFilteredEmails.map((email, index) => (
-                        <div key={index} className="p-4 bg-gray-50 rounded-lg">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-medium text-gray-900">{email.subject}</span>
-                            <span className="text-xs text-gray-500">{email.time}</span>
-                          </div>
-                          <p className="text-sm text-gray-600 mb-3">{email.preview}</p>
-                          <div className="flex items-center space-x-2 mb-2">
-                            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
-                              {email.isImportant ? 'High Priority' : 'Normal Priority'}
-                            </span>
-                            {email.subject.toLowerCase().includes('meeting') && (
-                              <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">Meeting</span>
-                            )}
-                            {email.isImportant && (
-                              <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs">Action Required</span>
-                            )}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            AI Confidence: {Math.floor(Math.random() * 20 + 80)}% • 
-                            Key Topics: {email.isImportant ? 'Urgent, Action Required' : 'Information, Update'}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Auto Reply View */}
-                {smartInboxView === 'auto-reply' && (
-                  <div>
-                    <div className="flex items-center space-x-2 mb-4">
-                      <Bot className="w-5 h-5 text-purple-600" />
-                      <h4 className="font-medium text-gray-900">Auto Reply Rules</h4>
-                    </div>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                          <div>
-                            <span className="font-medium">Out of Office</span>
-                            <p className="text-sm text-gray-600">Automatically respond when away</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm text-gray-500">12 responses</span>
-                          <button className="p-1 hover:bg-gray-200 rounded">
-                            <Settings className="w-4 h-4 text-gray-600" />
-                          </button>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                          <div>
-                            <span className="font-medium">Meeting Requests</span>
-                            <p className="text-sm text-gray-600">Auto-respond to meeting requests</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm text-gray-500">8 responses</span>
-                          <button className="p-1 hover:bg-gray-200 rounded">
-                            <Settings className="w-4 h-4 text-gray-600" />
-                          </button>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
-                          <div>
-                            <span className="font-medium">Support Inquiries</span>
-                            <p className="text-sm text-gray-600">Respond to customer support emails</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm text-gray-500">25 responses</span>
-                          <button className="p-1 hover:bg-gray-200 rounded">
-                            <Settings className="w-4 h-4 text-gray-600" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                    <button className="mt-4 w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors">
-                      Create New Rule
-                    </button>
-                  </div>
-                )}
-              </div>
-              
-              {/* Email List - Only show for categories view */}
-              {smartInboxView === 'categories' && (
-                <div className="space-y-2">
-                {mockEmails.filter(email => {
-                  if (!selectedSmartCategory) return true
-                  
-                  switch (selectedSmartCategory) {
-                    case 'urgent':
-                      return email.isImportant && email.subject.toLowerCase().includes('urgent')
-                    case 'important':
-                      return email.isImportant
-                    case 'meetings':
-                      return email.subject.toLowerCase().includes('meeting')
-                    case 'tasks':
-                      return email.subject.toLowerCase().includes('task') || email.subject.toLowerCase().includes('action')
-                    case 'notifications':
-                      return email.from.toLowerCase().includes('notification') || email.from.toLowerCase().includes('system')
-                    case 'marketing':
-                      return email.from.toLowerCase().includes('marketing') || email.from.toLowerCase().includes('newsletter')
-                    default:
-                      return true
-                  }
-                }).map((email) => (
-                  <motion.div
-                    key={email.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-all cursor-pointer ${
-                      selectedEmail?.id === email.id ? 'ring-2 ring-purple-500' : ''
-                    } ${!email.isRead ? 'bg-blue-50' : ''}`}
-                    onClick={() => setSelectedEmail(email)}
-                  >
-                    <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0">
-                        <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                          <User className="w-5 h-5 text-purple-600" />
-                        </div>
-                      </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="flex items-center space-x-2">
-                            <span className={`font-medium ${!email.isRead ? 'font-bold' : ''}`}>
-                              {email.from}
-                            </span>
-                            {email.isStarred && (
-                              <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                            )}
-                            {email.isImportant && (
-                              <AlertCircle className="w-4 h-4 text-red-500" />
-                            )}
-                            {/* AI Category Badge */}
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              email.isImportant ? 'bg-red-100 text-red-700' :
-                              email.subject.toLowerCase().includes('meeting') ? 'bg-green-100 text-green-700' :
-                              'bg-blue-100 text-blue-700'
-                            }`}>
-                              {email.isImportant ? 'Urgent' :
-                               email.subject.toLowerCase().includes('meeting') ? 'Meeting' :
-                               'Important'}
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            {email.hasAttachment && (
-                              <Paperclip className="w-4 h-4 text-gray-400" />
-                            )}
-                            <span className="text-sm text-gray-500">{email.time}</span>
-                          </div>
-                        </div>
-                        
-                        <h3 className={`text-sm ${!email.isRead ? 'font-bold' : 'font-medium'} text-gray-900 mb-1`}>
-                          {email.subject}
-                        </h3>
-                        
-                        <p className="text-sm text-gray-600 truncate">
-                          {email.preview}
-                        </p>
-                        
-                        <div className="flex items-center space-x-4 mt-2">
-                          {!email.isRead && (
-                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                          )}
-                          {/* AI Insights */}
-                          <div className="flex items-center space-x-2">
-                            <span className="text-xs text-gray-500">AI: </span>
-                            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
-                              {email.isImportant ? 'High Priority' : 'Normal Priority'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center space-x-1">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleStar(email)
-                          }}
-                          className="p-1 hover:bg-gray-100 rounded"
-                        >
-                          <Star className={`w-4 h-4 ${email.isStarred ? 'text-yellow-500 fill-current' : 'text-gray-400'}`} />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleAutoReply(email)
-                          }}
-                          className="p-1 hover:bg-gray-100 rounded"
-                          title="Auto Reply"
-                        >
-                          <Bot className="w-4 h-4 text-gray-400" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleSummary(email)
-                          }}
-                          className="p-1 hover:bg-gray-100 rounded"
-                          title="AI Summary"
-                        >
-                          <FileText className="w-4 h-4 text-gray-400" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleArchive(email)
-                          }}
-                          className="p-1 hover:bg-gray-100 rounded"
-                        >
-                          <Archive className="w-4 h-4 text-gray-400" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleDelete(email)
-                          }}
-                          className="p-1 hover:bg-gray-100 rounded"
-                        >
-                          <Trash2 className="w-4 h-4 text-gray-400" />
-                        </button>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-                </div>
-              )}
-            </div>
-          ) : activeTab === 'analytics' ? (
-            <EnhancedAnalytics 
-                emails={mockEmails} 
-                selectedCategory={selectedCategory}
-                onCategoryClick={(category) => {
-                  setSelectedCategory(category)
-                  setActiveTab('smart')
-                  // Map Analytics categories to Smart Inbox categories
-                  const categoryMap: { [key: string]: string } = {
-                    'Urgent': 'urgent',
-                    'Important': 'important', 
-                    'Meetings': 'meetings',
-                    'Notifications': 'notifications'
-                  }
-                  setSelectedSmartCategory(categoryMap[category] || category.toLowerCase())
-                }}
-                onExport={(format) => {
-                  console.log(`Exporting analytics as ${format}`)
-                  // Here you would implement actual export functionality
-                }}
-              />
-          ) : activeTab === 'automation' ? (
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <div className="text-center">
-                <Workflow className="w-12 h-12 text-purple-600 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Email Automation</h3>
-                <p className="text-gray-600 mb-4">Automate repetitive email tasks</p>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                      <span className="font-medium">Meeting Request Handler</span>
-                    </div>
-                    <span className="text-sm text-gray-500">15 triggers</span>
-                  </div>
-                  <div className="text-center p-4 bg-green-50 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">95%</div>
-                    <div className="text-sm text-gray-500">Response Rate</div>
-                    <div className="text-xs text-green-600">Above average</div>
-                  </div>
-                  <div className="text-center p-4 bg-blue-50 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-600">2.3h</div>
-                    <div className="text-sm text-gray-500">Avg Response</div>
-                    <div className="text-xs text-green-600">Faster than 80%</div>
-                  </div>
-                  <div className="text-center p-4 bg-orange-50 rounded-lg">
-                    <div className="text-2xl font-bold text-orange-600">87/100</div>
-                    <div className="text-sm text-gray-500">Productivity</div>
-                    <div className="text-xs text-green-600">Excellent</div>
-                  </div>
-                </div>
-
-                {/* Email Volume Chart */}
-                <div className="mb-6">
-                  <h4 className="font-semibold text-gray-900 mb-4">Email Volume (Last 7 Days)</h4>
-                  <div className="h-32 flex items-end space-x-2">
-                    {[12, 8, 15, 10, 18, 14, 16].map((height, index) => (
-                      <div key={index} className="flex-1 flex flex-col items-center">
-                        <div
-                          className="bg-purple-500 rounded-t w-full transition-all hover:bg-purple-600"
-                          style={{ height: `${(height / 20) * 100}%` }}
-                        ></div>
-                        <span className="text-xs text-gray-500 mt-2">
-                          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][index]}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Category Breakdown */}
-                <div className="mb-6">
-                  <h4 className="font-semibold text-gray-900 mb-4">Email Categories</h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                        <span className="text-sm text-gray-700">Work</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm font-medium text-gray-900">3</span>
-                        <span className="text-xs text-gray-500">(60%)</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                        <span className="text-sm text-gray-700">Personal</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm font-medium text-gray-900">1</span>
-                        <span className="text-xs text-gray-500">(20%)</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                        <span className="text-sm text-gray-700">Marketing</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm font-medium text-gray-900">1</span>
-                        <span className="text-xs text-gray-500">(20%)</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Productivity Insights */}
-                <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4">
-                  <h4 className="font-semibold text-gray-900 mb-4">Productivity Insights</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-purple-600">4</div>
-                      <div className="text-sm text-gray-600">Emails Processed</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600">2h 15m</div>
-                      <div className="text-sm text-gray-600">Time Spent</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-green-600">87%</div>
-                      <div className="text-sm text-gray-600">Efficiency</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-orange-600">1h 45m</div>
-                      <div className="text-sm text-gray-600">Focus Time</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : activeTab === 'calendar' ? (
-            <CalendarView
+            <EnhancedSmartInbox
               emails={mockEmails}
               onEmailSelect={setSelectedEmail}
+              onCategoryChange={setSelectedSmartCategory}
             />
-          ) : activeTab === 'settings' ? (
-            <SettingsPage
-              customCategories={customCategories}
-              onCategoriesUpdate={setCustomCategories}
+          ) : activeTab === 'analytics' ? (
+            <SimpleAnalytics
+              emails={mockEmails}
+              selectedCategory={selectedCategory || undefined}
+              onCategoryClick={(category) => {
+                setActiveTab('smart')
+                setSelectedSmartCategory(category)
+              }}
             />
           ) : (
-            /* Email List */
-            <div className="space-y-2">
-                {mainFilteredEmails.map((email) => (
-                <motion.div
-                  key={email.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-all cursor-pointer ${
-                    selectedEmail?.id === email.id ? 'ring-2 ring-purple-500' : ''
-                  } ${!email.isRead ? 'bg-blue-50' : ''}`}
-                  onClick={() => setSelectedEmail(email)}
-                >
-                  <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0">
-                      <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                        <User className="w-5 h-5 text-purple-600" />
-                      </div>
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center space-x-2">
-                          <span className={`font-medium ${!email.isRead ? 'font-bold' : ''}`}>
-                            {email.from}
-                          </span>
-                          {email.isStarred && (
-                            <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                          )}
-                          {email.isImportant && (
-                            <AlertCircle className="w-4 h-4 text-red-500" />
-                          )}
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          {email.hasAttachment && (
-                            <Paperclip className="w-4 h-4 text-gray-400" />
-                          )}
-                          <span className="text-sm text-gray-500">{email.time}</span>
-                        </div>
-                      </div>
-                      
-                      <h3 className={`text-sm ${!email.isRead ? 'font-bold' : 'font-medium'} text-gray-900 mb-1`}>
-                        {email.subject}
-                      </h3>
-                      
-                      <p className="text-sm text-gray-600 truncate">
-                        {email.preview}
-                      </p>
-                      
-                      <div className="flex items-center space-x-4 mt-2">
-                        {!email.isRead && (
-                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-1">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleStar(email)
-                        }}
-                        className="p-1 hover:bg-gray-100 rounded"
-                      >
-                        <Star className={`w-4 h-4 ${email.isStarred ? 'text-yellow-500 fill-current' : 'text-gray-400'}`} />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleAutoReply(email)
-                        }}
-                        className="p-1 hover:bg-gray-100 rounded"
-                        title="Auto Reply"
-                      >
-                        <Bot className="w-4 h-4 text-gray-400" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleSummary(email)
-                        }}
-                        className="p-1 hover:bg-gray-100 rounded"
-                        title="AI Summary"
-                      >
-                        <FileText className="w-4 h-4 text-gray-400" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleArchive(email)
-                        }}
-                        className="p-1 hover:bg-gray-100 rounded"
-                      >
-                        <Archive className="w-4 h-4 text-gray-400" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleDelete(email)
-                        }}
-                        className="p-1 hover:bg-gray-100 rounded"
-                      >
-                        <Trash2 className="w-4 h-4 text-gray-400" />
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+            <div className="space-y-4">
+              <p className="text-gray-500">No content available for this tab</p>
             </div>
           )}
         </div>
       </div>
+
+      {/* Email Detail */}
+      {selectedEmail && (
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="w-96 bg-white border-l border-gray-200 flex flex-col"
+        >
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Email Details</h3>
+              <button
+                onClick={() => setSelectedEmail(null)}
+                className="p-1 hover:bg-gray-100 rounded"
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="space-y-3">
+              <div>
+                <label className="text-sm font-medium text-gray-500">From</label>
+                <p className="text-gray-900">{selectedEmail.from}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">Subject</label>
+                <p className="text-gray-900">{selectedEmail.subject}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">Time</label>
+                <p className="text-gray-900">{selectedEmail.time}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex-1 p-4 overflow-y-auto">
+            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+              <p className="text-gray-700">{selectedEmail.preview}</p>
+            </div>
+            
+            <div className="space-y-2">
+              <button
+                onClick={() => handleAutoReply(selectedEmail)}
+                className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center"
+              >
+                <Bot className="w-4 h-4 mr-2" />
+                Auto Reply
+              </button>
+              <button
+                onClick={() => handleSummary(selectedEmail)}
+                className="w-full border border-purple-600 text-purple-600 py-2 px-4 rounded-lg font-medium hover:bg-purple-50 transition-colors flex items-center justify-center"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                AI Summary
+              </button>
+              <button className="w-full border border-gray-300 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center justify-center">
+                <Forward className="w-4 h-4 mr-2" />
+                Forward
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Compose Modal */}
+      {composeOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4"
+          >
+            <div className="p-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">Compose Email</h3>
+                <button
+                  onClick={() => setComposeOpen(false)}
+                  className="p-1 hover:bg-gray-100 rounded"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">To</label>
+                <input
+                  type="email"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder="Enter recipient email"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                <input
+                  type="text"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder="Enter subject"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                <textarea
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent h-64"
+                  placeholder="Type your message here..."
+                />
+              </div>
+            </div>
+            
+            <div className="p-4 border-t border-gray-200 flex justify-end space-x-3">
+              <button
+                onClick={() => setComposeOpen(false)}
+                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => setComposeOpen(false)}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center"
+              >
+                <Send className="w-4 h-4 mr-2" />
+                Send
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       {/* Email Detail */}
       {selectedEmail && (
@@ -1933,7 +1194,7 @@ export default function EmailClient() {
       {categoryManagerOpen && (
         <CategoryManager
           categories={customCategories}
-          onCategoriesUpdate={setCustomCategories}
+          onCategoriesUpdate={(categories) => setCustomCategories(categories as any)}
           onClose={() => setCategoryManagerOpen(false)}
         />
       )}

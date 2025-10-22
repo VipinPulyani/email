@@ -445,7 +445,11 @@ export default function EnhancedAnalytics({ emails, onExport, onCategoryClick, s
   }, [emails, selectedPeriod])
 
   const getChartData = () => {
-    if (!analytics) return null
+    if (!analytics) {
+      console.log('No analytics data available')
+      return null
+    }
+    console.log('Analytics data:', analytics)
 
     switch (selectedMetric) {
       case 'volume':
@@ -741,11 +745,19 @@ export default function EnhancedAnalytics({ emails, onExport, onCategoryClick, s
           </div>
           
           <div className="h-80">
-            {selectedMetric === 'response' ? (
-              getChartData() && <Bar data={getChartData()!} options={chartOptions} />
-            ) : (
-              getChartData() && <Line data={getChartData()!} options={chartOptions} />
-            )}
+            {(() => {
+              const chartData = getChartData()
+              console.log('Chart data:', chartData)
+              console.log('Selected metric:', selectedMetric)
+              if (!chartData) {
+                return <div className="flex items-center justify-center h-full text-gray-500">Loading chart data...</div>
+              }
+              return selectedMetric === 'response' ? (
+                <Bar data={chartData} options={chartOptions} />
+              ) : (
+                <Line data={chartData} options={chartOptions} />
+              )
+            })()}
           </div>
         </motion.div>
 
@@ -758,7 +770,14 @@ export default function EnhancedAnalytics({ emails, onExport, onCategoryClick, s
         >
           <h3 className="text-xl font-semibold text-gray-900 mb-6">Email Categories</h3>
           <div className="h-80">
-            {getDoughnutData() && <Doughnut data={getDoughnutData()!} options={doughnutOptions} />}
+            {(() => {
+              const doughnutData = getDoughnutData()
+              console.log('Doughnut data:', doughnutData)
+              if (!doughnutData) {
+                return <div className="flex items-center justify-center h-full text-gray-500">Loading category data...</div>
+              }
+              return <Doughnut data={doughnutData} options={doughnutOptions} />
+            })()}
           </div>
           <div className="mt-4 space-y-2">
             {analytics.categoryBreakdown.map((category, index) => (
@@ -1217,6 +1236,165 @@ export default function EnhancedAnalytics({ emails, onExport, onCategoryClick, s
               ))}
             </div>
           </div>
+        </div>
+      </motion.div>
+
+      {/* Additional Visualizations */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+        {/* Weekly Meeting Heatmap */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.1 }}
+          className="bg-white rounded-xl border border-gray-200 p-6"
+        >
+          <h3 className="text-xl font-semibold text-gray-900 mb-6">Weekly Meeting Heatmap</h3>
+          <div className="grid grid-cols-7 gap-1 mb-4">
+            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => (
+              <div key={day} className="text-center text-xs font-medium text-gray-600 py-2">
+                {day}
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-7 gap-1">
+            {Array.from({ length: 35 }, (_, index) => {
+              const intensity = Math.random() * 4;
+              return (
+                <div
+                  key={index}
+                  className={`aspect-square rounded-sm ${
+                    intensity === 0 ? 'bg-gray-100' :
+                    intensity < 1 ? 'bg-green-200' :
+                    intensity < 2 ? 'bg-green-300' :
+                    intensity < 3 ? 'bg-green-400' :
+                    'bg-green-500'
+                  }`}
+                  title={`${Math.floor(intensity)} meetings`}
+                />
+              );
+            })}
+          </div>
+          <div className="flex items-center justify-between mt-4 text-xs text-gray-600">
+            <span>Less</span>
+            <div className="flex space-x-1">
+              <div className="w-3 h-3 bg-gray-100 rounded-sm"></div>
+              <div className="w-3 h-3 bg-green-200 rounded-sm"></div>
+              <div className="w-3 h-3 bg-green-300 rounded-sm"></div>
+              <div className="w-3 h-3 bg-green-400 rounded-sm"></div>
+              <div className="w-3 h-3 bg-green-500 rounded-sm"></div>
+            </div>
+            <span>More</span>
+          </div>
+        </motion.div>
+
+        {/* Today's Meetings */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.2 }}
+          className="bg-white rounded-xl border border-gray-200 p-6"
+        >
+          <h3 className="text-xl font-semibold text-gray-900 mb-6">Today's Meetings</h3>
+          <div className="space-y-4">
+            {[
+              { time: '9:00 AM', title: 'Daily Standup', attendees: 8, duration: '30m', priority: 'high' },
+              { time: '2:00 PM', title: 'Product Review', attendees: 5, duration: '1h', priority: 'medium' },
+              { time: '4:00 PM', title: 'Client Call', attendees: 3, duration: '45m', priority: 'high' }
+            ].map((meeting, index) => (
+              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <div className={`w-3 h-3 rounded-full ${
+                    meeting.priority === 'high' ? 'bg-red-500' : 'bg-yellow-500'
+                  }`}></div>
+                  <div>
+                    <p className="font-medium text-gray-900">{meeting.title}</p>
+                    <p className="text-sm text-gray-600">{meeting.time} • {meeting.duration}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-medium text-gray-900">{meeting.attendees} people</p>
+                  <p className="text-xs text-gray-500 capitalize">{meeting.priority} priority</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Email Volume Trend */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.3 }}
+        className="bg-white rounded-xl border border-gray-200 p-6 mt-8"
+      >
+        <h3 className="text-xl font-semibold text-gray-900 mb-6">Email Volume Trend (Last 7 Days)</h3>
+        <div className="h-64">
+          {(() => {
+            const volumeData = {
+              labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+              datasets: [{
+                label: 'Emails Received',
+                data: [45, 52, 38, 61, 48, 25, 30],
+                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.4,
+                fill: true
+              }]
+            };
+            return <Line data={volumeData} options={{
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: {
+                  display: false
+                }
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  grid: {
+                    color: 'rgba(0, 0, 0, 0.1)'
+                  }
+                },
+                x: {
+                  grid: {
+                    display: false
+                  }
+                }
+              }
+            }} />;
+          })()}
+        </div>
+      </motion.div>
+
+      {/* Meeting Time Distribution */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.4 }}
+        className="bg-white rounded-xl border border-gray-200 p-6 mt-8"
+      >
+        <h3 className="text-xl font-semibold text-gray-900 mb-6">Meeting Time Distribution</h3>
+        <div className="space-y-4">
+          {[
+            { hour: '9:00 AM', count: 12, percentage: 25 },
+            { hour: '10:00 AM', count: 8, percentage: 17 },
+            { hour: '2:00 PM', count: 15, percentage: 31 },
+            { hour: '3:00 PM', count: 10, percentage: 21 },
+            { hour: '4:00 PM', count: 3, percentage: 6 }
+          ].map((time, index) => (
+            <div key={index} className="flex items-center space-x-4">
+              <div className="w-16 text-sm text-gray-600">{time.hour}</div>
+              <div className="flex-1 bg-gray-200 rounded-full h-4">
+                <div
+                  className="bg-blue-500 h-4 rounded-full"
+                  style={{ width: `${time.percentage}%` }}
+                ></div>
+              </div>
+              <div className="w-12 text-sm font-medium text-gray-900">{time.count}</div>
+            </div>
+          ))}
         </div>
       </motion.div>
     </div>
